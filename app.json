@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "clientpulse-app",
-    "slug": "clientpulse-app",
+    "name": "clientPlus-app",
+    "slug": "clientPlus-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,6 +24,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sharing",
+      "expo-web-browser",
+      "expo-font"
+    ]
   }
 }
