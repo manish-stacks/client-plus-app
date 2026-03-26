@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView,
@@ -6,13 +6,13 @@ import {
   Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-// Note: expo install expo-linear-gradient
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import logo from '../../assets/hbs-logo.png';
+import ScreenWrapper from '../components/ScreenWrapper';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const { colors, isDark } = useTheme();
   const [email, setEmail] = useState('rahul@hbs.com');
@@ -29,61 +29,62 @@ export default function LoginScreen() {
 
   const s = styles(colors);
   return (
-    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+    <ScreenWrapper isScrollable={false}>
+      <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Logo */}
-        <View style={s.logoWrap}>
-          <Image source={logo} style={s.logoIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-          <Text style={s.logoName}>Client<Text style={{ color: colors.primary }}>Plus</Text></Text>
-          <Text style={s.logoSub}>Digital Marketing Dashboard</Text>
-        </View>
+          {/* Logo */}
+          <View style={s.logoWrap}>
+            <Image source={logo} style={s.logoIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+            <Text style={s.logoName}>Client<Text style={{ color: colors.primary }}>Plus</Text></Text>
+            <Text style={s.logoSub}>Digital Marketing Dashboard</Text>
+          </View>
 
-        <Text style={s.title}>Welcome back 👋</Text>
-        <Text style={s.sub}>Sign in to manage your services</Text>
+          <Text style={s.title}>Welcome back 👋</Text>
+          <Text style={s.sub}>Sign in to manage your services</Text>
 
-        {/* Email */}
-        <Text style={s.label}>EMAIL ADDRESS</Text>
-        <TextInput
-          style={s.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@company.com"
-          placeholderTextColor={colors.text3}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          {/* Email */}
+          <Text style={s.label}>EMAIL ADDRESS</Text>
+          <TextInput
+            style={s.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@company.com"
+            placeholderTextColor={colors.text3}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        {/* Password */}
-        <Text style={[s.label, { marginTop: 16 }]}>PASSWORD</Text>
-        <TextInput
-          style={s.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="*********"
-          placeholderTextColor={colors.text3}
-          secureTextEntry
-        />
-        <TouchableOpacity style={s.forgot}><Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Forgot Password?</Text></TouchableOpacity>
+          {/* Password */}
+          <Text style={[s.label, { marginTop: 16 }]}>PASSWORD</Text>
+          <TextInput
+            style={s.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="*********"
+            placeholderTextColor={colors.text3}
+            secureTextEntry
+          />
+          <TouchableOpacity style={s.forgot} onPress={() => navigation.navigate('ForgotPassword')}><Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Forgot Password?</Text></TouchableOpacity>
 
-        {/* Button */}
-        <TouchableOpacity onPress={handleLogin} disabled={loading}>
-          <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.btn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-            <Text style={s.btnText}>{loading ? 'Signing in...' : 'Sign In →'}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          {/* Button */}
+          <TouchableOpacity onPress={handleLogin} disabled={loading}>
+            <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.btn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              <Text style={s.btnText}>{loading ? 'Signing in...' : 'Sign In →'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <Text style={s.noAccount}>
-          Don't have an account?
-          <Text style={{ color: colors.primary, fontWeight: '700' }}
-            onPress={() => Linking.openURL('https://hoverbusinessservices.com/contact-us.php')}>
-            Contact us
-            
+          <Text style={s.noAccount}>
+            Don't have an account?
+            <Text style={{ color: colors.primary, fontWeight: '700' }}
+              onPress={() => Linking.openURL('https://hoverbusinessservices.com/contact-us.php')}>
+              {' '}Contact us
+            </Text>
           </Text>
-        </Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

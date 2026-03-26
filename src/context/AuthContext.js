@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // App khulne pe check karo token hai ya nahi
+    // when app opens check if user is logged in
     AsyncStorage.getItem('userToken').then(token => {
       if (token) setIsLoggedIn(true);
       setLoading(false);
@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    // Mock auth — real app mein API call hoga
     if (email && password) {
       await AsyncStorage.setItem('userToken', 'mock-token-123');
       await AsyncStorage.setItem('userEmail', email);

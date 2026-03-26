@@ -16,6 +16,11 @@ import ServiceDetailScreen from '../screens/ServiceDetailScreen';
 import RenewalsScreen from '../screens/RenewalsScreen';
 import ProposalsScreen from '../screens/ProposalsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
+import NotificationsSettingsScreen from '../screens/profile/NotificationsSettingsScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -67,7 +72,10 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isLoggedIn ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} />
@@ -75,6 +83,12 @@ export default function AppNavigator() {
             <Stack.Screen name="Renewals" component={RenewalsScreen} />
             <Stack.Screen name="Proposals" component={ProposalsScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
+
+             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+            {/*<Stack.Screen name="ContactInfo" component={ContactInfoScreen} />*/}
+            <Stack.Screen name="NotificationsSettings" component={NotificationsSettingsScreen} /> 
+
           </>
         )}
       </Stack.Navigator>
