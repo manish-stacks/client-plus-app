@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SERVICES } from '../constants/data';
 import ScreenWrapper from '../components/ScreenWrapper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
 
 
 function getGreeting() {
@@ -55,7 +58,19 @@ export default function HomeScreen({ navigation }) {
 
   const expiring = SERVICES.filter(sv => sv.status === 'expiring' || sv.status === 'critical');
   const recent = SERVICES.slice(0, 1);
+  const { userData } = useAuth();
 
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const loadUser = async () => {
+      const data = await userData();
+      setUser(data);
+    };
+
+    loadUser();
+  }, []);
+
+  console.log(user)
   return (
     <ScreenWrapper>
       <View style={s.container}>
@@ -63,7 +78,7 @@ export default function HomeScreen({ navigation }) {
         <View style={s.header}>
           <View>
             <Text style={s.greeting}>{getGreeting()}</Text>
-            <Text style={s.headerSub}>Rahul Sharma • TechCorp India</Text>
+            <Text style={s.headerSub}>{user?.client_name || 'User'} • TechCorp India</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Notifications')}>

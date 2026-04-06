@@ -15,8 +15,8 @@ import ScreenWrapper from '../components/ScreenWrapper';
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const { colors, isDark } = useTheme();
-  const [email, setEmail] = useState('rahul@hbs.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('7050690034');
+  const [password, setPassword] = useState('123456789');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {

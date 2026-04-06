@@ -1,5 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AxiosInstance } from '../lib/Axios.instance';
+import { Alert } from 'react-native';
 
 const AuthContext = createContext();
 
@@ -16,22 +18,34 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    if (email && password) {
-      await AsyncStorage.setItem('userToken', 'mock-token-123');
-      await AsyncStorage.setItem('userEmail', email);
+    try {
+      const response = await AxiosInstance.post('/client/login', { email, password });
+      // console.log(" LOGIN RESPONSE:", response.data);
+      await AsyncStorage.setItem('userToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.data));
       setIsLoggedIn(true);
       return true;
+    } catch (error) {
+      // console.log("LOGIN ERROR:", error);
+      Alert.alert("Login Failed", error.message || "Something went wrong");
+      return false;
     }
-    return false;
+
   };
 
   const logout = async () => {
     await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('userData');
     setIsLoggedIn(false);
   };
 
+  const userData = async () => {
+    const data = await AsyncStorage.getItem('userData');
+    return data ? JSON.parse(data) : null;
+  }
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, loading, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, loading, login, logout, userData }}>
       {children}
     </AuthContext.Provider>
   );
