@@ -1,32 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SERVICES } from '../constants/data';
 import { StatusChip } from './HomeScreen';
 import ScreenWrapper from '../components/ScreenWrapper';
+import { AxiosInstance } from '../lib/Axios.instance';
 
 const FILTERS = ['All', 'Active', 'Expiring', 'Critical', 'Expired'];
 
 export default function ServicesScreen({ navigation }) {
   const { colors } = useTheme();
   const s = styles(colors);
-
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [services, setServices] = useState([]);
 
-  const filtered = SERVICES.filter(sv => {
-    const matchFilter = filter === 'All' || sv.status === filter.toLowerCase();
-    const matchSearch = sv.name.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const res = await AxiosInstance.get('/client/services');
+      setServices(res.data.services);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const filtered = services.filter(sv => {
+    const matchFilter =
+      filter === 'All' || sv.status?.toLowerCase() === filter.toLowerCase();
+
+    const matchSearch =
+      sv.name?.toLowerCase().includes(search.toLowerCase());
+
     return matchFilter && matchSearch;
   });
 
+  // console.log("service data: ", services)
   return (
     <ScreenWrapper>
       <View style={s.container}>
         <View style={s.header}>
           <Text style={s.title}>My Services</Text>
-          <Text style={s.sub}>{SERVICES.length} active services</Text>
+          <Text style={s.sub}>{services.length} active services</Text>
         </View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 20 }}>
           {/* Search */}

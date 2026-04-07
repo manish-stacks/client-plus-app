@@ -1,14 +1,36 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { AxiosInstance } from '../lib/Axios.instance';
+import * as Linking from 'expo-linking';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { INVOICES } from '../constants/data';
 import { StatusChip } from './HomeScreen';
 import ScreenWrapper from '../components/ScreenWrapper';
 
 export default function PaymentsScreen() {
   const { colors } = useTheme();
   const s = styles(colors);
+  const [invoices, setInvoices] = useState([]);
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    try {
+      const res = await AxiosInstance.get('/client/invoices');
+
+      setInvoices(res?.data?.invoices || []);
+      setSummary(res?.data?.summary || null);
+
+    } catch (e) {
+      console.log('Invoice Error:', e);
+    }
+  };
+
+  // console.log("summary: ", summary);
+  // console.log("invoices: ", invoices);
 
   return (
     <ScreenWrapper>
@@ -21,9 +43,9 @@ export default function PaymentsScreen() {
           {/* Summary */}
           <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
             {[
-              { val: '₹84K', label: 'Total Paid', color: colors.green },
-              { val: '₹12K', label: 'Pending', color: colors.yellow },
-              { val: '8', label: 'Invoices', color: colors.text },
+              { val: summary?.totalPaid || '₹0', label: 'Total Paid', color: colors.green },
+              { val: summary?.pending || '₹0', label: 'Pending', color: colors.yellow },
+              { val: summary?.count || 0, label: 'Invoices', color: colors.text },
             ].map((item, i) => (
               <View key={i} style={s.payStat}>
                 <Text style={[s.payVal, { color: item.color }]}>{item.val}</Text>
@@ -33,7 +55,7 @@ export default function PaymentsScreen() {
           </View>
 
           <Text style={s.sectionTitle}>Recent Invoices</Text>
-          {INVOICES.map(inv => (
+          {invoices.map(inv => (
             <View key={inv.id} style={s.invoiceCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={[s.invoiceIcon, { backgroundColor: inv.status === 'paid' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)' }]}>
@@ -50,11 +72,40 @@ export default function PaymentsScreen() {
               </View>
               <View style={[s.invoiceFooter]}>
                 <StatusChip status={inv.status === 'paid' ? 'active' : 'expiring'} />
-                <TouchableOpacity style={[s.dlBtn, { backgroundColor: inv.status === 'paid' ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.1)' }]}>
+                {/* <TouchableOpacity style={[s.dlBtn, { backgroundColor: inv.status === 'paid' ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.1)' }]}>
                   <Text style={{ color: inv.status === 'paid' ? '#16A34A' : '#D97706', fontWeight: '700', fontSize: 12 }}>
                     {inv.status === 'paid' ? '⬇ Receipt' : 'Pay Now'}
                   </Text>
+                </TouchableOpacity> */}
+                <TouchableOpacity
+                  style={[
+                    s.dlBtn,
+                    {
+                      backgroundColor:
+                        inv.status === 'paid'
+                          ? 'rgba(34,197,94,0.08)'
+                          : 'rgba(245,158,11,0.1)'
+                    }
+                  ]}
+                  onPress={() => {
+                    if (inv.status === 'paid' && inv.file) {
+                      Linking.openURL(inv.file);
+                    } else {
+                      console.log('Redirect to payment gateway');
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: inv.status === 'paid' ? '#16A34A' : '#D97706',
+                      fontWeight: '700',
+                      fontSize: 12
+                    }}
+                  >
+                    {inv.status === 'paid' ? '⬇ Receipt' : 'Pay Now'}
+                  </Text>
                 </TouchableOpacity>
+
               </View>
             </View>
           ))}

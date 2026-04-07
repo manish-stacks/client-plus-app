@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AxiosInstance } from '../lib/Axios.instance';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutAnimation, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,26 +29,51 @@ export default function SupportScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [tickets, setTickets] = useState([]);
 
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const res = await AxiosInstance.get('/client/tickets');
+      setTickets(res?.data?.tickets || []);
+    } catch (e) {
+      console.log('Ticket Error:', e);
+    }
+  };
 
   const toggleFaq = (i) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpenFaq(openFaq === i ? null : i);
   };
 
-  const handleTicketSubmit = () => {
+  const handleTicketSubmit = async () => {
     if (!title || !description) {
       Alert.alert('Please fill all fields');
       return;
     }
 
-    console.log('Ticket:', { title, description });
-    setModalVisible(false);
-    setTitle('');
-    setDescription('');
+    try {
+      await AxiosInstance.post('/client/tickets', {
+        title,
+        description
+      });
 
-    Alert.alert('Ticket submitted 🚀');
-  }
+      setModalVisible(false);
+      setTitle('');
+      setDescription('');
+
+      fetchTickets();
+
+      Alert.alert('Ticket submitted 🚀');
+    } catch (e) {
+      console.log(e);
+      Alert.alert('Something went wrong');
+    }
+  };
+
   return (
     <ScreenWrapper>
       <View style={s.container}>
@@ -61,16 +87,20 @@ export default function SupportScreen() {
           </TouchableOpacity>
 
           <Text style={[s.sectionTitle, { marginTop: 4 }]}>My Tickets</Text>
-          {TICKETS.map(t => (
-            <View key={t.id} style={s.ticketCard}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, flex: 1, marginRight: 8 }}>{t.title}</Text>
-                <StatusChip status={ticketStatusMap[t.status]} />
+          {
+            tickets.length > 0 ? tickets.map(t => (
+              <View key={t.id} style={s.ticketCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, flex: 1, marginRight: 8 }}>{t.title}</Text>
+                  <StatusChip status={ticketStatusMap[t.status]} />
+                </View>
+                <Text style={{ fontSize: 12, color: colors.text2 }}>#{t.id} • Opened {t.date} • {t.replies} replies</Text>
               </View>
-              <Text style={{ fontSize: 12, color: colors.text2 }}>#{t.id} • Opened {t.date} • {t.replies} replies</Text>
-            </View>
-          ))}
+            )) : (
+              <Text style={{ color: colors.text2, fontStyle: 'italic', marginBottom: 8 }}>No tickets raised yet.</Text>
+            )
 
+          }
           <Text style={[s.sectionTitle, { marginTop: 8 }]}>FAQ</Text>
           {FAQ.map((f, i) => (
             <TouchableOpacity key={i} style={s.faqItem} onPress={() => toggleFaq(i)}>

@@ -1,23 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../context/ThemeContext';
 import ScreenWrapper from '../components/ScreenWrapper';
+import { AxiosInstance } from '../lib/Axios.instance';
+import * as Linking from 'expo-linking';
 
 export default function ServiceDetailScreen({ navigation, route }) {
   const { colors } = useTheme();
-  const sv = route.params.service;
   const s = styles(colors);
+  const [sv, setSv] = useState(null);
+  const serviceId = route.params.service?.id;
+  useEffect(() => {
+    fetchDetail();
+  }, []);
 
-  // Circular progress (SVG-based — manual draw with View overlays for simplicity)
-  const pct = sv.progress;
+  const fetchDetail = async () => {
+    try {
+      const res = await AxiosInstance.get(`/client/services/${serviceId}`);
+      setSv(res.data);
+    } catch (e) {
+      console.log('Service Detail Error:', e);
+    }
+  };
 
+  const pct = sv?.progress;
+
+  if (!sv) {
+    return <Text style={{ textAlign: 'center', marginTop: 50 }}>Loading...</Text>;
+  }
+  // console.log("service details: ", sv)
+  const handleOpenFile = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        alert("Can't open this file");
+      }
+    } catch (e) {
+      console.log("File open error:", e);
+    }
+  };
   return (
     <ScreenWrapper>
       <View style={s.container}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
           {/* Hero */}
           <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
@@ -67,10 +97,16 @@ export default function ServiceDetailScreen({ navigation, route }) {
                 <Text style={{ fontSize: 12, color: colors.text2, marginTop: 2 }}>{sv.manager.role}</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[s.contactBtn, { backgroundColor: 'rgba(34,197,94,0.1)' }]}>
+                <TouchableOpacity
+                  style={[s.contactBtn, { backgroundColor: 'rgba(34,197,94,0.1)' }]}
+                  onPress={() => Linking.openURL(`tel:${sv.manager.phone}`)}
+                >
                   <Ionicons name="call-outline" size={18} color="#22C55E" />
                 </TouchableOpacity>
-                <TouchableOpacity style={[s.contactBtn, { backgroundColor: 'rgba(59,130,246,0.1)' }]}>
+                <TouchableOpacity
+                  style={[s.contactBtn, { backgroundColor: 'rgba(59,130,246,0.1)' }]}
+                  onPress={() => Linking.openURL(`mailto:${sv.manager.email}`)}
+                >
                   <Ionicons name="mail-outline" size={18} color="#3B82F6" />
                 </TouchableOpacity>
               </View>
@@ -108,23 +144,33 @@ export default function ServiceDetailScreen({ navigation, route }) {
               <>
                 <Text style={s.sectionTitle}>📑 Monthly Reports</Text>
                 <View style={s.chartCard}>
-                  {sv.reports.map((r, i) => (
-                    <View key={i} style={[s.reportItem, i === sv.reports.length - 1 && { borderBottomWidth: 0 }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
-                        <View style={s.reportIcon}><Ionicons name="document-text-outline" size={18} color={colors.primary} /></View>
-                        <View>
-                          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{r.month} Report</Text>
-                          <Text style={{ fontSize: 11, color: colors.text2, marginTop: 2 }}>Generated {r.generated}</Text>
+                  {sv.reports.map((r, i) => {
+                    const isPDF = r.file.includes('.pdf');
+                    return (
+                      <View key={i} style={[s.reportItem, i === sv.reports.length - 1 && { borderBottomWidth: 0 }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+                          <View style={s.reportIcon}><Ionicons name="document-text-outline" size={18} color={colors.primary} /></View>
+                          <View>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{r.month} Report</Text>
+                            <Text style={{ fontSize: 11, color: colors.text2, marginTop: 2 }}>Generated {r.generated}</Text>
+                          </View>
                         </View>
+                        <TouchableOpacity
+                          style={s.dlBtn}
+                          onPress={() => handleOpenFile(r.file)}
+                        >
+                          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>
+                            {isPDF ? 'PDF' : 'Image'}
+                          </Text>
+                        </TouchableOpacity>
+                        {/* <TouchableOpacity style={s.dlBtn} onPress={() => Linking.openURL(r.file)}><Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>PDF</Text></TouchableOpacity> */}
                       </View>
-                      <TouchableOpacity style={s.dlBtn}><Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>PDF</Text></TouchableOpacity>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               </>
             )}
           </View>
-        </ScrollView>
       </View>
     </ScreenWrapper>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,8 +35,17 @@ const ITEMS = [
 
 export default function ProfileScreen({ navigation }) {
   const { colors, isDark, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, userData } = useAuth();
   const s = styles(colors);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const loadUser = async () => {
+      const data = await userData();
+      setUser(data);
+    };
+
+    loadUser();
+  }, []);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -47,48 +56,48 @@ export default function ProfileScreen({ navigation }) {
   return (
     <ScreenWrapper>
       <View style={s.container}>
-          {/* Hero */}
-          <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <View style={s.avatarWrap}>
-              <View style={s.avatar}><Text style={{ color: 'white', fontWeight: '800', fontSize: 30 }}>RS</Text></View>
-              <View style={s.editBadge}><Ionicons name="pencil" size={12} color={colors.primary} /></View>
-            </View>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: 'white' }}>Rahul Sharma</Text>
-            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>rahul@techcorp.in</Text>
-          </LinearGradient>
-
-          <View style={{ padding: 20 }}>
-            <View style={s.card}>
-              {ITEMS.map((item, i) => (
-                <TouchableOpacity key={i} onPress={() => navigation.navigate(item.screen)} style={[s.profileItem, i === ITEMS.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                  <View style={[s.pIcon, { backgroundColor: item.bg }]}><Ionicons name={item.icon} size={18} color={item.color} /></View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{item.label}</Text>
-                    <Text style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>{item.sub}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={colors.text3} />
-                </TouchableOpacity>
-              ))}
-
-            </View>
-            {/* Dark mode toggle */}
-            <View style={s.card}>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={[s.pIcon, { backgroundColor: 'rgba(100,100,100,0.1)' }]}>
-                  <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={18} color={colors.text2} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{isDark ? 'Light Mode' : 'Dark Mode'}</Text>
-                  <Text style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>Toggle theme</Text>
-                </View>
-                <Switch value={isDark} onValueChange={toggleTheme} />
-              </View>
-            </View>
-
-            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
-              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>← Sign Out</Text>
-            </TouchableOpacity>
+        {/* Hero */}
+        <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <View style={s.avatarWrap}>
+            <View style={s.avatar}><Text style={{ color: 'white', fontWeight: '800', fontSize: 30 }}>{user?.client_name ? user.client_name.split(' ').map(n => n[0]).join('') : 'RS'}</Text></View>
+            <View style={s.editBadge}><Ionicons name="pencil" size={12} color={colors.primary} /></View>
           </View>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: 'white' }}>{user?.client_name || 'Guest'}</Text>
+          <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>{user?.email || 'Your email'}</Text>
+        </LinearGradient>
+
+        <View style={{ padding: 20 }}>
+          <View style={s.card}>
+            {ITEMS.map((item, i) => (
+              <TouchableOpacity key={i} onPress={() => navigation.navigate(item.screen)} style={[s.profileItem, i === ITEMS.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                <View style={[s.pIcon, { backgroundColor: item.bg }]}><Ionicons name={item.icon} size={18} color={item.color} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{item.label}</Text>
+                  <Text style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>{item.sub}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.text3} />
+              </TouchableOpacity>
+            ))}
+
+          </View>
+          {/* Dark mode toggle */}
+          <View style={s.card}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={[s.pIcon, { backgroundColor: 'rgba(100,100,100,0.1)' }]}>
+                <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={18} color={colors.text2} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{isDark ? 'Light Mode' : 'Dark Mode'}</Text>
+                <Text style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>Toggle theme</Text>
+              </View>
+              <Switch value={isDark} onValueChange={toggleTheme} />
+            </View>
+          </View>
+
+          <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>← Sign Out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScreenWrapper>
   );
