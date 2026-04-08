@@ -113,7 +113,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
             </View>
 
             {/* Chart — only if data exists */}
-            {sv.chartData && sv.chartData.length > 0 && (
+            {/* {sv.chartData && sv.chartData.length > 0 && (
               <>
                 <Text style={s.sectionTitle}>📊 Performance</Text>
                 <View style={s.chartCard}>
@@ -137,7 +137,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
                   />
                 </View>
               </>
-            )}
+            )} */}
 
             {/* Monthly Reports */}
             {sv.reports && sv.reports.length > 0 && (

@@ -8,6 +8,7 @@ import { TICKETS } from '../constants/data';
 import { StatusChip } from './HomeScreen';
 import { Modal, TextInput } from 'react-native';
 import ScreenWrapper from '../components/ScreenWrapper';
+import { useAuth } from '../context/AuthContext';
 
 const FAQ = [
   { q: 'How often are SEO reports sent?', a: 'SEO reports are sent monthly on the 1st of each month via email. You can also access them anytime from the Service Detail screen.' },
@@ -30,10 +31,18 @@ export default function SupportScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tickets, setTickets] = useState([]);
+  const [user, setUser] = useState(null);
+  const { userData } = useAuth();
 
   useEffect(() => {
     fetchTickets();
+    loadUser();
   }, []);
+
+  const loadUser = async () => {
+    const data = await userData();
+    setUser(data);
+  };
 
   const fetchTickets = async () => {
     try {
@@ -57,6 +66,7 @@ export default function SupportScreen() {
 
     try {
       await AxiosInstance.post('/client/tickets', {
+        userId: user.id,
         title,
         description
       });

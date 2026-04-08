@@ -1,4 +1,5 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { AxiosInstance } from '../lib/Axios.instance';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -16,6 +17,19 @@ const iconMap = {
 export default function NotificationsScreen({ navigation }) {
   const { colors } = useTheme();
   const s = styles(colors);
+  const [notifications, setNotifications] = useState([]);
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await AxiosInstance.get('/client/notifications');
+      setNotifications(res?.data?.notifications || []);
+    } catch (e) {
+      console.log('Notification Error:', e);
+    }
+  };
   return (
     <ScreenWrapper>
       <View style={s.container}>
@@ -24,23 +38,106 @@ export default function NotificationsScreen({ navigation }) {
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </TouchableOpacity>
           <Text style={s.title}>Notifications</Text>
-          <TouchableOpacity style={{ marginLeft: 'auto' }}><Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>Mark all read</Text></TouchableOpacity>
+          <TouchableOpacity
+            style={{ marginLeft: 'auto' }}
+            onPress={async () => {
+              try {
+                await AxiosInstance.post('/client/notifications/read-all');
+                fetchNotifications(); // refresh
+              } catch (e) {
+                console.log(e);
+              }
+            }}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>
+              Mark all read
+            </Text>
+          </TouchableOpacity>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
-          {NOTIFICATIONS.map(n => {
-            const ic = iconMap[n.type];
-            return (
-              <View key={n.id} style={[s.notifItem, n === NOTIFICATIONS[NOTIFICATIONS.length - 1] && { borderBottomWidth: 0 }]}>
-                <View style={[{ width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 }, { backgroundColor: n.unread ? colors.primary : 'transparent' }]} />
-                <View style={[s.notifIcon, { backgroundColor: ic.bg }]}><Ionicons name={ic.name} size={20} color={ic.color} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '600', fontSize: 14, color: colors.text }}>{n.title}</Text>
-                  <Text style={{ fontSize: 12, color: colors.text2, marginTop: 2, lineHeight: 17 }}>{n.body}</Text>
-                  <Text style={{ fontSize: 11, color: colors.text3, marginTop: 4 }}>{n.time}</Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 20 }}
+        >
+          {notifications.length === 0 ? (
+            <Text style={{ fontSize: 14, color: colors.text }}>
+              No notifications
+            </Text>
+          ) : (
+            notifications.map((n, index) => {
+              const ic = iconMap[n.type];
+              const isLast = index === notifications.length - 1;
+
+              return (
+                <View
+                  key={n.id}
+                  style={[
+                    s.notifItem,
+                    isLast && { borderBottomWidth: 0 },
+                  ]}
+                >
+                  <View
+                    style={[
+                      {
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        marginTop: 6,
+                        flexShrink: 0,
+                      },
+                      {
+                        backgroundColor: n.unread
+                          ? colors.primary
+                          : "transparent",
+                      },
+                    ]}
+                  />
+
+                  <View
+                    style={[s.notifIcon, { backgroundColor: ic.bg }]}
+                  >
+                    <Ionicons
+                      name={ic.name}
+                      size={20}
+                      color={ic.color}
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 14,
+                        color: colors.text,
+                      }}
+                    >
+                      {n.title}
+                    </Text>
+
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.text2,
+                        marginTop: 2,
+                        lineHeight: 17,
+                      }}
+                    >
+                      {n.body}
+                    </Text>
+
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: colors.text3,
+                        marginTop: 4,
+                      }}
+                    >
+                      {n.time}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </ScrollView>
       </View>
     </ScreenWrapper>

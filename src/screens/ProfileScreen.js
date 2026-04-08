@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Switch, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import ScreenWrapper from '../components/ScreenWrapper';
+import { AxiosInstance } from '../lib/Axios.instance';
 
 const ITEMS = [
   {
@@ -39,13 +40,24 @@ export default function ProfileScreen({ navigation }) {
   const s = styles(colors);
   const [user, setUser] = useState(null);
   useEffect(() => {
-    const loadUser = async () => {
-      const data = await userData();
-      setUser(data);
-    };
+    // const loadUser = async () => {
+    //   const data = await userData();
+    //   setUser(data);
+    // };
 
-    loadUser();
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await AxiosInstance.get('/client/profile');
+      console.log("user", res.data)
+      setUser(res.data);
+    } catch (e) {
+      console.log('Profile Error:', e);
+    }
+  };
+
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -59,10 +71,18 @@ export default function ProfileScreen({ navigation }) {
         {/* Hero */}
         <LinearGradient colors={[colors.gradStart, colors.gradEnd]} style={s.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           <View style={s.avatarWrap}>
-            <View style={s.avatar}><Text style={{ color: 'white', fontWeight: '800', fontSize: 30 }}>{user?.client_name ? user.client_name.split(' ').map(n => n[0]).join('') : 'RS'}</Text></View>
-            <View style={s.editBadge}><Ionicons name="pencil" size={12} color={colors.primary} /></View>
+            <View style={s.avatar}>
+              {user?.image ? (
+                <Image source={{ uri: user?.image }} style={s.avatarImg} />
+              ) : (
+                <Text style={s.avatarText}>
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'RS'}
+                </Text>
+              )}
+            </View>
+            {/* <View style={s.editBadge}><Ionicons name="pencil" size={12} color={colors.primary} /></View> */}
           </View>
-          <Text style={{ fontSize: 22, fontWeight: '800', color: 'white' }}>{user?.client_name || 'Guest'}</Text>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: 'white' }}>{user?.name || 'Guest'}</Text>
           <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>{user?.email || 'Your email'}</Text>
         </LinearGradient>
 
@@ -114,4 +134,7 @@ const styles = (c) => StyleSheet.create({
   pIcon: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   logoutBtn: { padding: 14, backgroundColor: 'rgba(229,9,20,0.08)', borderWidth: 1.5, borderColor: 'rgba(229,9,20,0.2)', borderRadius: 12, alignItems: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  avatarImg: {
+    width: 80, height: 80, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)'
+  },
 });

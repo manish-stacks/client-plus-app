@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, KeyboardAvoidingView, Platform,
@@ -10,15 +10,34 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { AxiosInstance } from '../../lib/Axios.instance';
 
 export default function EditProfileScreen({ navigation }) {
     const { colors, isDark } = useTheme();
-
-    const [name, setName] = useState('Rahul Sharma');
-    const [email, setEmail] = useState('rahul@hbs.com');
-    const [phone, setPhone] = useState('+91 9876543210');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const res = await AxiosInstance.get('/client/profile');
+            // console.log('Profile Data:', res.data);
+            setName(res.data.name);
+            setEmail(res.data.email);
+            setPhone(res.data.phone);
+            setImage(res.data.image);
+
+        } catch (e) {
+            console.log('Profile Error:', e);
+        }
+    };
 
     //  Pick from gallery
     const pickImage = async () => {
@@ -69,27 +88,44 @@ export default function EditProfileScreen({ navigation }) {
     };
 
     //  Submit
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!name || !email || !phone) {
             Alert.alert('Error', 'Please fill all fields');
             return;
         }
 
-        setLoading(true);
+        try {
+            setLoading(true);
 
-        setTimeout(() => {
-            setLoading(false);
+            const formData = new FormData();
 
-            console.log({
-                name,
-                email,
-                phone,
-                image,
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('phone', phone);
+
+            if (image && !image.startsWith('http')) {
+                formData.append('image', {
+                    uri: image,
+                    name: 'profile.jpg',
+                    type: 'image/jpeg',
+                });
+            }
+
+            await AxiosInstance.post('/client/profile/update', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
             Alert.alert('Success', 'Profile updated successfully');
             navigation.goBack();
-        }, 1000);
+
+        } catch (e) {
+            console.log('Update Error:', e);
+            Alert.alert('Error', 'Update failed');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const s = styles(colors);

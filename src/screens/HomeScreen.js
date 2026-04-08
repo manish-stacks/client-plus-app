@@ -1,5 +1,5 @@
 
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -64,13 +64,15 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     fetchDashboard();
   }, []);
+
   const activeCount = dashboard?.stats?.active || 0;
   const expiringCount = dashboard?.stats?.expiring || 0;
   const totalPaid = dashboard?.stats?.totalPaid || 0;
   const expiring = dashboard?.expiringServices || [];
   const recent = dashboard?.recentServices || [];
   const user = dashboard?.user;
-
+  const totalNotifications = dashboard?.totalNotifications || 0;
+  const userImage = dashboard?.user?.image;
   if (!dashboard) {
     return (
       <View style={{
@@ -103,10 +105,17 @@ export default function HomeScreen({ navigation }) {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Notifications')}>
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
-              <View style={s.badge}><Text style={{ color: 'white', fontSize: 9, fontWeight: '700' }}>3</Text></View>
+              <View style={s.badge}><Text style={{ color: 'white', fontSize: 9, fontWeight: '700' }}>{totalNotifications}</Text></View>
             </TouchableOpacity>
             <TouchableOpacity style={[s.iconBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => navigation.navigate('Profile')}>
-              <Text style={{ color: 'white', fontWeight: '800', fontSize: 14 }}>{user?.client_name ? user.client_name.split(' ').map(n => n[0]).join('') : 'RS'}</Text>
+              {userImage ? (
+                <Image source={{ uri: userImage }} style={s.avatarImg} />
+              ) : (
+                <Text style={{ color: 'white', fontWeight: '800', fontSize: 14 }}>
+                  {user?.client_name ? user.client_name.split(' ').map(n => n[0]).join('') : 'RS'}
+                </Text>
+              )}
+
             </TouchableOpacity>
           </View>
         </View>
@@ -224,4 +233,7 @@ const styles = (c) => StyleSheet.create({
   serviceCard: { backgroundColor: c.card, borderWidth: 1.5, borderColor: c.border, borderRadius: 16, padding: 16, marginBottom: 12 },
   serviceIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   chevron: { width: 32, height: 32, backgroundColor: c.bg3, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginLeft: 'auto' },
+  avatarImg: {
+    width: 50, height: 50, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)'
+  },
 });

@@ -7,16 +7,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
+import { AxiosInstance } from '../../lib/Axios.instance';
 
 export default function ChangePasswordScreen({ navigation }) {
   const { colors } = useTheme();
-
+  const s = styles(colors);
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!oldPass || !newPass || !confirmPass) {
       Alert.alert('Error', 'Please fill all fields');
       return;
@@ -32,16 +33,31 @@ export default function ChangePasswordScreen({ navigation }) {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('Success', 'Password updated successfully');
+      const res = await AxiosInstance.post('/client/change-password', {
+        old_password: oldPass,
+        new_password: newPass,
+        new_password_confirmation: confirmPass
+      });
+
+      Alert.alert('Success', res.data.message || 'Password updated');
       navigation.goBack();
-    }, 1000);
+
+    } catch (e) {
+      console.log('Password Error:', e?.response?.data);
+
+      Alert.alert(
+        'Error',
+        e?.response?.data?.message || 'Something went wrong'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const s = styles(colors);
+
 
   return (
     <ScreenWrapper>
@@ -58,7 +74,7 @@ export default function ChangePasswordScreen({ navigation }) {
         style={{ padding: 20 }}
       >
         <View style={s.card}>
-          
+
           <Text style={s.label}>Current Password</Text>
           <TextInput
             style={s.input}
@@ -98,12 +114,12 @@ export default function ChangePasswordScreen({ navigation }) {
 }
 
 const styles = (c) => StyleSheet.create({
-  header:{flexDirection:'row',alignItems:'center',padding:20},
-  backBtn:{width:36,height:36,backgroundColor:c.card2,borderWidth:1.5,borderColor:c.border,borderRadius:10,alignItems:'center',justifyContent:'center',marginRight:10},
-  title:{fontSize:20,fontWeight:'800',color:c.text},
-  card:{backgroundColor:c.card,borderWidth:1.5,borderColor:c.border,borderRadius:16,padding:16,marginBottom:20},
-  label:{fontSize:12,color:c.text2,marginBottom:6,marginTop:10},
-  input:{backgroundColor:c.bg2,borderWidth:1.5,borderColor:c.border,borderRadius:12,padding:14,color:c.text},
-  btn:{padding:16,borderRadius:12,alignItems:'center'},
-  btnText:{color:'#fff',fontWeight:'800'}
+  header: { flexDirection: 'row', alignItems: 'center', padding: 20 },
+  backBtn: { width: 36, height: 36, backgroundColor: c.card2, borderWidth: 1.5, borderColor: c.border, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  title: { fontSize: 20, fontWeight: '800', color: c.text },
+  card: { backgroundColor: c.card, borderWidth: 1.5, borderColor: c.border, borderRadius: 16, padding: 16, marginBottom: 20 },
+  label: { fontSize: 12, color: c.text2, marginBottom: 6, marginTop: 10 },
+  input: { backgroundColor: c.bg2, borderWidth: 1.5, borderColor: c.border, borderRadius: 12, padding: 14, color: c.text },
+  btn: { padding: 16, borderRadius: 12, alignItems: 'center' },
+  btnText: { color: '#fff', fontWeight: '800' }
 });

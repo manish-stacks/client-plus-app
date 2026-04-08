@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AxiosInstance } from '../lib/Axios.instance';
 import * as Linking from 'expo-linking';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { StatusChip } from './HomeScreen';
 import ScreenWrapper from '../components/ScreenWrapper';
+import RazorpayCheckout from 'react-native-razorpay';
 
 export default function PaymentsScreen() {
   const { colors } = useTheme();
@@ -32,6 +33,53 @@ export default function PaymentsScreen() {
   // console.log("summary: ", summary);
   // console.log("invoices: ", invoices);
 
+  const handlePayment = async (inv) => {
+    try {
+      // 1. create order
+      const res = await AxiosInstance.post('/client/create-order', {
+        invoice_id: inv.id
+      });
+
+      const order = res.data;
+
+      // 2. open razorpay
+      const options = {
+        key: order.key,
+        amount: order.amount,
+        currency: 'INR',
+        name: 'HBS',
+        description: inv.service,
+        order_id: order.order_id,
+        prefill: {
+          email: '',
+          contact: ''
+        },
+        theme: { color: '#E50914' }
+      };
+
+      RazorpayCheckout.open(options)
+        .then(async (data) => {
+          // 3. verify
+          await AxiosInstance.post('/client/verify-payment', {
+            razorpay_order_id: data.razorpay_order_id,
+            razorpay_payment_id: data.razorpay_payment_id,
+            razorpay_signature: data.razorpay_signature,
+            invoice_id: order.invoice_id
+          });
+
+          Alert.alert('Success', 'Payment successful');
+
+          fetchInvoices(); // refresh
+        })
+        .catch((error) => {
+          console.log(error);
+          Alert.alert('Payment Failed');
+        });
+
+    } catch (e) {
+      console.log(e);
+    }
+  };
   return (
     <ScreenWrapper>
       <View style={s.container}>
@@ -91,7 +139,7 @@ export default function PaymentsScreen() {
                     if (inv.status === 'paid' && inv.file) {
                       Linking.openURL(inv.file);
                     } else {
-                      console.log('Redirect to payment gateway');
+                      handlePayment(inv);
                     }
                   }}
                 >
