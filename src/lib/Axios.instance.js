@@ -3,7 +3,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AxiosInstance = axios.create({
-    baseURL: `http://192.168.1.16/dashboard/hbs-crm/api`,
+    baseURL: `http://192.168.1.17/dashboard/hbs-crm/api`,
     timeout: 300000,
     headers: {
         'Content-Type': 'application/json',

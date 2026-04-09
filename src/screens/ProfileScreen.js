@@ -137,4 +137,7 @@ const styles = (c) => StyleSheet.create({
   avatarImg: {
     width: 80, height: 80, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)'
   },
+  avatarText: {
+    color: 'rgb(255, 255, 255)', justifyContent: 'center', alignItems: 'center', fontSize: 28, fontWeight: '800'
+  }
 });

@@ -143,6 +143,7 @@ export default function PaymentsScreen() {
                     }
                   }}
                 >
+                
                   <Text
                     style={{
                       color: inv.status === 'paid' ? '#16A34A' : '#D97706',
@@ -174,6 +175,6 @@ const styles = (c) => StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 12 },
   invoiceCard: { backgroundColor: c.card, borderWidth: 1.5, borderColor: c.border, borderRadius: 12, padding: 16, marginBottom: 10 },
   invoiceIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  invoiceFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.border },
+  invoiceFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1,borderTopColor: c.border },
   dlBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
 });
