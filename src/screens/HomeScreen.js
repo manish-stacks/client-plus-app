@@ -53,7 +53,7 @@ export default function HomeScreen({ navigation }) {
   const [dashboard, setDashboard] = useState(null);
 
   const fetchDashboard = async () => {
-    try {
+    try { 
       const res = await AxiosInstance.get('/client/dashboard');
       setDashboard(res.data);
     } catch (error) {
