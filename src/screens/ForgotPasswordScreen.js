@@ -13,7 +13,7 @@ import ScreenWrapper from '../components/ScreenWrapper';
 export default function ForgotPasswordScreen({ navigation }) {
   const { colors, isDark } = useTheme();
 
-  const [email, setEmail] = useState('rahul@hbs.com');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

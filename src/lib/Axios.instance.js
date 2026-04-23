@@ -1,37 +1,34 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const AxiosInstance = axios.create({
-    baseURL: `http://192.168.1.15/dashboard/hbs-crm/api`,
-    timeout: 300000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const BASE_URL = 'https://crm.hoverbusinessservices.com/working-crm/api';
 
-AxiosInstance.interceptors.request.use(
+const attachInterceptors = (instance) => {
+  instance.interceptors.request.use(
     async (config) => {
-        const token = await AsyncStorage.getItem('userToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
     },
     (error) => Promise.reject(error)
-);
+  );
 
-AxiosInstance.interceptors.response.use(
+  instance.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const status = error.response?.status;
-        const errorMessage = error.response?.data?.message || error.message || "Network error please check your connection";
-
-        if (status === 401 || status === 403) {
-            if (typeof window !== "undefined") {
-                await AsyncStorage.removeItem('userToken');
-                await AsyncStorage.removeItem('userData');
-            }
-        }
-        return Promise.reject({ status, message: errorMessage });
+      const status = error.response?.status;
+      const errorMessage = error.response?.data?.message || error.message || 'Network error. Please check your connection.';
+      if (status === 401 || status === 403) {
+        await AsyncStorage.multiRemove(['userToken', 'userRole', 'userData']);
+      }
+      return Promise.reject({ status, message: errorMessage });
     }
+  );
+  return instance;
+};
+
+export const AxiosInstance = attachInterceptors(
+  axios.create({ baseURL: BASE_URL, timeout: 30000, headers: { 'Content-Type': 'application/json' } })
 );
+
+
