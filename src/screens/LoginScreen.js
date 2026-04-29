@@ -19,13 +19,14 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
-  const [activeRole, setActiveRole] = useState('client'); // 'client' | 'employee'
+  const [activeRole, setActiveRole] = useState('client'); 
 
   const handleLogin = async () => {
     if (!email.trim()) { Alert.alert('Error', 'Please enter your email'); return; }
     if (!password) { Alert.alert('Error', 'Please enter your password'); return; }
-    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // if (!emailRegex.test(email.trim())) { Alert.alert('Error', 'Please enter a valid email'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const mobileRegex = /^\d{10}$/;
+    if (!emailRegex.test(email.trim()) && !mobileRegex.test(email.trim())) { Alert.alert('Error', 'Please enter a valid email or mobile number'); return; }
 
     setLoading(true);
     const success = await login(email.trim().toLowerCase(), password, activeRole);
@@ -68,7 +69,7 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           {/* Email */}
-          <Text style={s.label}>EMAIL ADDRESS</Text>
+          <Text style={s.label}>EMAIL/MOBILE</Text>
           <TextInput
             style={s.input}
             value={email}

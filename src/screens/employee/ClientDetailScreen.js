@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput,
 } from 'react-native';
@@ -7,16 +7,32 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { AxiosInstance } from '../../lib/Axios.instance';
 import ScreenWrapper from '../../components/ScreenWrapper';
+import { Picker } from '@react-native-picker/picker';
 
 export default function ClientDetailScreen({ route, navigation }) {
   const { colors } = useTheme();
   const { client } = route.params;
   const [showAssign, setShowAssign] = useState(false);
-  const [service, setService] = useState({ service_name: '', price: '', renewal_date: '' });
+  const [service, setService] = useState({ service_name: '', price: '', duration: '' });
   const [assigning, setAssigning] = useState(false);
+  const [packages, setPackages] = useState([]);
+  const [selectedPackage, setSelectedPackage] = useState(null);
 
   const services = client.services || client.assigned_services || [];
   const initials = client.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
+
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const res = await AxiosInstance.get('/employee/packages');
+      setPackages(res.data?.data || []);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const handleAssignService = async () => {
     if (!service.service_name.trim()) { Alert.alert('Error', 'Service name is required'); return; }
@@ -25,20 +41,44 @@ export default function ClientDetailScreen({ route, navigation }) {
     try {
       await AxiosInstance.post('/employee/assign-service', {
         client_id: client.id,
-        ...service,
+        package_id: selectedPackage,
         price: parseFloat(service.price),
+        duration: service.duration,
       });
       Alert.alert('Success', 'Service assigned!');
       setShowAssign(false);
-      setService({ service_name: '', price: '', renewal_date: '' });
+      setService({ service_name: '', price: '', duration: '' });
     } catch (e) {
       Alert.alert('Error', e.message || 'Failed to assign service');
     } finally {
       setAssigning(false);
     }
   };
+  const assignedPackageIds = services.map(s => s.name || s.id);
+  const totalAmount = services.reduce((sum, s) => {
+    return sum + (parseFloat(s.price) || 0);
+  }, 0);
 
   const s = styles(colors);
+
+  const handleGenerateInvoice = async () => {
+
+    if (services.length === 0) {
+      return Alert.alert('Error', 'No services to generate invoice');
+    }
+
+    try {
+
+      await AxiosInstance.post('/employee/generate-invoice', {
+        client_id: client.id
+      });
+
+      Alert.alert('Success', 'Invoice generated successfully');
+
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Failed to generate invoice');
+    }
+  };
   return (
     <ScreenWrapper isScrollable={false}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -88,10 +128,56 @@ export default function ClientDetailScreen({ route, navigation }) {
 
             {showAssign && (
               <View style={[s.assignBox, { backgroundColor: colors.bg2, borderColor: colors.border }]}>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text2, marginBottom: 6 }}>
+                    PACKAGE *
+                  </Text>
+
+                  <View style={[s.fieldWrap, {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    paddingVertical: 0
+                  }]}>
+                    <Ionicons name="layers-outline" size={16} color={colors.text3} />
+
+                    <Picker
+                      selectedValue={selectedPackage}
+                      style={{ flex: 1, color: colors.text }}
+                      onValueChange={(value) => {
+
+                        setSelectedPackage(value);
+
+                        const pkg = packages.find(p => p.id === value);
+
+                        if (pkg) {
+                          setService(prev => ({
+                            ...prev,
+                            price: pkg.price?.toString() || ''
+                          }));
+                        }
+                      }}
+                    >
+                      <Picker.Item label="Select Package" value={null} />
+
+                      {packages.map(p => {
+                        const isAssigned = assignedPackageIds.includes(p.package_name || p.id);
+                        return (
+                          <Picker.Item
+                            key={p.id}
+                            label={isAssigned ? `${p.package_name} (Already Added)` : p.package_name}
+                            value={p.id}
+                            enabled={!isAssigned}
+                            color={isAssigned ? 'gray' : undefined}
+                          />
+                        );
+                      })}
+                    </Picker>
+                  </View>
+                </View>
+
                 {[
-                  { key: 'service_name', label: 'Service Name', placeholder: 'e.g. SEO', icon: 'layers-outline' },
                   { key: 'price', label: 'Price (₹)', placeholder: '5000', icon: 'cash-outline', keyboardType: 'decimal-pad' },
-                  { key: 'renewal_date', label: 'Renewal Date', placeholder: 'YYYY-MM-DD', icon: 'calendar-outline' },
+                  { key: 'duration', label: 'Duration', placeholder: '6 months', icon: 'calendar-outline' },
                 ].map((f, i) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text2, marginBottom: 6 }}>{f.label.toUpperCase()}</Text>
@@ -127,11 +213,47 @@ export default function ClientDetailScreen({ route, navigation }) {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text }}>{sv.name || sv.service_name}</Text>
                     {sv.price ? <Text style={{ fontSize: 12, color: colors.green, fontWeight: '600', marginTop: 2 }}>₹{sv.price}</Text> : null}
-                    {sv.renewal_date ? <Text style={{ fontSize: 11, color: colors.text3, marginTop: 1 }}>Renews: {sv.renewal_date}</Text> : null}
+                    {sv.duration ? <Text style={{ fontSize: 11, color: colors.text3, marginTop: 1 }}>Renews: {sv.duration}</Text> : null}
                   </View>
                 </View>
               ))
             )}
+          </View>
+          <View style={[s.card, { borderColor: colors.border }]}>
+
+            <Text style={[s.cardTitle, { color: colors.text }]}>
+              Invoice Summary
+            </Text>
+
+            {/* TOTAL SERVICES */}
+            <View style={s.invoiceRow}>
+              <Text style={[s.invoiceLabel, { color: colors.text2 }]}>
+                Total Services
+              </Text>
+              <Text style={[s.invoiceValue, { color: colors.text }]}>
+                {services.length}
+              </Text>
+            </View>
+
+            {/* TOTAL AMOUNT */}
+            <View style={s.invoiceRow}>
+              <Text style={[s.invoiceLabel, { color: colors.text2 }]}>
+                Total Amount
+              </Text>
+              <Text style={[s.invoiceValue, { color: colors.greenText }]}>
+                ₹{totalAmount}
+              </Text>
+            </View>
+
+            {/* GENERATE BUTTON */}
+            <TouchableOpacity
+              style={[s.invoiceBtn, { backgroundColor: colors.primary }]}
+              onPress={handleGenerateInvoice}
+            >
+              <Ionicons name="document-text-outline" size={18} color="#fff" />
+              <Text style={s.invoiceBtnText}>Generate Invoice</Text>
+            </TouchableOpacity>
+
           </View>
         </View>
       </ScrollView>
@@ -159,4 +281,33 @@ const styles = (c) => StyleSheet.create({
   assignBtn: { padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 4 },
   serviceItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, marginTop: 8 },
   serviceIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  invoiceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12
+  },
+
+  invoiceLabel: {
+    fontSize: 13,
+  },
+
+  invoiceValue: {
+    fontSize: 14,
+    fontWeight: '700'
+  },
+
+  invoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 16
+  },
+
+  invoiceBtnText: {
+    color: '#fff',
+    fontWeight: '700'
+  },
 });

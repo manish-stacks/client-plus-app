@@ -198,7 +198,7 @@ export default function VisitsScreen({ navigation }) {
 
       {/* Add Visit Modal */}
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
-        <View style={[s.modal, { backgroundColor: colors.bg }]}>
+        <View style={[s.modal, { backgroundColor: colors.bg, paddingTop: 40 }]}>
           <View style={s.modalHeader}>
             <Text style={[s.modalTitle, { color: colors.text }]}>Schedule Visit</Text>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
